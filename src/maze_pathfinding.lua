@@ -46,26 +46,26 @@ return function()
 			end
 		end
 	end
-
+	print(map("mapWidth"))
 	local boxGrid = {}
 
-	for y=1, map("mapHeight") do
-		boxGrid[y]={}
-		str=str.."\n"
-		for x=1, map("mapWidth") do
-			if map.layer["boxes2"].tile(x, y) then
-				boxGrid[y][x]=10
-				str=str.."##"
-			else
-				boxGrid[y][x]=0
-				str=str.."  "
-			end
-		end
+	for x=1, #map.layer["boxes"].object do
+		local tempBox = map.layer["boxes"].object[x]
+		temperX = tempBox.x
+		temperY = tempBox.y
+		print(temperX .. " " .. temperY)
+		tempBox.gridX = math.ceil(temperX/map("tileWidth"))
+		tempBox.gridY = math.ceil(temperY/map("tileWidth"))
+
 	end
-
-	local boxGrid1 = other_grid(boxGrid)
-
+	print(#map.layer["boxes"].object)
 	print("\nRepresentation of generated pathfinding map: "..str)
+
+	-- local test, tempx, tempy
+	-- tempx=math.ceil(temperX/map("tileWidth"))
+	-- tempy=math.ceil(temperY/map("tileHeight"))
+
+	-- print("x: " .. tempx .. " y: " .. tempy)
 
 	local grid=jumper_grid(mapGrid)
 	-- create a pathfinder using A* with grid based on Tiled json
@@ -130,17 +130,17 @@ return function()
 		return map.layer["obstacles"].tile(x, y)~=nil, x, y
 	end
 
-	local function checkForBox( x, y )
-		x=math.ceil(x/map("tileWidth"))
-		y=math.ceil(y/map("tileHeight"))
+	-- local function checkForBox( x, y )
+	-- 	x=math.ceil(x/map("tileWidth"))
+	-- 	y=math.ceil(y/map("tileHeight"))
 
-		return map.layer["boxes2"].tile(x,y)~=nil, x, y
-	end
+	-- 	return map.layer["boxes2"].tile(x,y)~=nil, x, y
+	-- end
 
-	local function checkSurrounding(x,y)
-		if x <= map("mapWidth") then
-		end	
-	end
+	-- local function checkSurrounding(x,y)
+	-- 	if x <= map("mapWidth") then
+	-- 	end	
+	-- end
 	------------------------------------------------------------------------------
 	-- Move Player
 	------------------------------------------------------------------------------
