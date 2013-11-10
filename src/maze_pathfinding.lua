@@ -151,4 +151,8 @@ return function()
 	end
 
 	Runtime:addEventListener("touch", movePlayer)
+	box1 = map.layer["boxes"].object["box1"]
+	print(box1.weight)
+	print(box1.y)
+
 end
