@@ -8,7 +8,6 @@ Demonstrates:
 Note:
 	The Jumper pathfinding module was sourced from github.com/yonaba/jumper.
 
-Sample Version 1.0
 --]]
 
 return function()
@@ -37,8 +36,8 @@ return function()
 		mapGrid[y]={}
 		str=str.."\n"
 		for x=1, map("mapWidth") do
-			if map.layer["layer1"].tile(x, y) then
-				mapGrid[y][x]=1
+			if map.layer["obstacles"].tile(x, y) then
+				mapGrid[y][x]=10
 				str=str.."##"
 			else
 				mapGrid[y][x]=0
@@ -50,12 +49,13 @@ return function()
 	print("\nRepresentation of generated pathfinding map: "..str)
 
 	local grid=jumper_grid(mapGrid)
+	-- create a pathfinder using A* with grid based on Tiled json
 	local pathfinder=jumper_pathfinder(grid, "ASTAR", 0)
 
 	------------------------------------------------------------------------------
 	-- Create Player
 	------------------------------------------------------------------------------
-	local playerXY=map.layer["layer1"].playerSpawn
+	local playerXY=map.layer["obstacles"].playerSpawn
 
 	local player=display.newImageRect("assets/player.png", 32, 32)
 	player.x=(playerXY[1]-0.5)*map("tileWidth")
@@ -83,7 +83,7 @@ return function()
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
-				time=100,
+				time=25,
 				onComplete=function()
 					transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=100})
 					player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
@@ -98,7 +98,7 @@ return function()
 		end
 	end
 
-	map.layer["layer1"]:insert(player)
+	map.layer["obstacles"]:insert(player)
 
 	------------------------------------------------------------------------------
 	-- Check for Existence of Tile at Location
@@ -107,7 +107,7 @@ return function()
 		x=math.ceil(x/map("tileWidth"))
 		y=math.ceil(y/map("tileHeight"))
 		
-		return map.layer["layer1"].tile(x, y)~=nil, x, y
+		return map.layer["obstacles"].tile(x, y)~=nil, x, y
 	end
 
 	------------------------------------------------------------------------------
