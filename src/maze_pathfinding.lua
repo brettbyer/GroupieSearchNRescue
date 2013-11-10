@@ -23,6 +23,7 @@ return function()
 	local map=ceramic.buildMap("maps/test.json", true) -- Notice the true; this tells Ceramic to load map using basic mode
 	
 	local jumper_grid=require("jumper.grid")
+	local other_grid=require("jumper.grid")
 	local jumper_pathfinder=require("jumper.pathfinder")
 
 	local mapGrid={}
@@ -45,6 +46,24 @@ return function()
 			end
 		end
 	end
+
+	local boxGrid = {}
+
+	for y=1, map("mapHeight") do
+		boxGrid[y]={}
+		str=str.."\n"
+		for x=1, map("mapWidth") do
+			if map.layer["boxes2"].tile(x, y) then
+				boxGrid[y][x]=10
+				str=str.."##"
+			else
+				boxGrid[y][x]=0
+				str=str.."  "
+			end
+		end
+	end
+
+	local boxGrid1 = other_grid(boxGrid)
 
 	print("\nRepresentation of generated pathfinding map: "..str)
 
@@ -95,6 +114,7 @@ return function()
 		else
 			player.nodeIndex=2
 			player.movementAllowed=true
+			print(player.movementAllowed)
 		end
 	end
 
@@ -110,10 +130,21 @@ return function()
 		return map.layer["obstacles"].tile(x, y)~=nil, x, y
 	end
 
+	local function checkForBox( x, y )
+		x=math.ceil(x/map("tileWidth"))
+		y=math.ceil(y/map("tileHeight"))
+
+		return map.layer["boxes2"].tile(x,y)~=nil, x, y
+	end
+
+	local function checkSurrounding(x,y)
+		if x <= map("mapWidth") then
+		end	
+	end
 	------------------------------------------------------------------------------
 	-- Move Player
 	------------------------------------------------------------------------------
-	local function movePlayer(event)
+	local function movePlayer(event, boxX, boxY )
 		if "began"==event.phase and player.movementAllowed then
 			for i=1, #player.pathDisplay do
 				display.remove(player.pathDisplay[i])
@@ -122,7 +153,7 @@ return function()
 
 			player.updateGridPos() -- Reset player grid position
 
-			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
+			local pointBlocked, tileX, tileY=checkForTile(event.x or boxX, event.y or boxY)
 
 			if not pointBlocked then
 				local path=pathfinder:getPath(player.gridX, player.gridY, tileX, tileY)
@@ -149,6 +180,17 @@ return function()
 			end
 		end
 	end
+	
+	local function doThis( event )
+    	print( "Test 2" )
+	end
+
+	local function doThisToo( event )
+		print( "Test 3" )
+	end
+
+	print( "Test 1 " )
+	timer.performWithDelay( 1000, doThis, 1 )
 
 	Runtime:addEventListener("touch", movePlayer)
 	box1 = map.layer["boxes"].object["box1"]
