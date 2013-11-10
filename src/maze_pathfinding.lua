@@ -114,7 +114,7 @@ return function()
 	-- Move Player
 	------------------------------------------------------------------------------
 	local function movePlayer(event)
-		if "began"==event.phase and player.movementAllowed then
+		if  player.movementAllowed then
 			for i=1, #player.pathDisplay do
 				display.remove(player.pathDisplay[i])
 				player.pathDisplay[i]=nil
@@ -122,7 +122,10 @@ return function()
 
 			player.updateGridPos() -- Reset player grid position
 
-			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
+			local destX = math.random(display.contentWidth - map("tileWidth"))
+			local destY = math.random(display.contentHeight - map("tileWidth"))
+
+			local pointBlocked, tileX, tileY=checkForTile(destX, destY)
 
 			if not pointBlocked then
 				local path=pathfinder:getPath(player.gridX, player.gridY, tileX, tileY)
@@ -151,4 +154,5 @@ return function()
 	end
 
 	Runtime:addEventListener("touch", movePlayer)
+	--Runtime:addEventListener("myEvent", movePlayer)
 end
