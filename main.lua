@@ -132,9 +132,6 @@ Note:
 	-- Move Player
 	------------------------------------------------------------------------------
 	local function movePlayer( event )
-		print(system.getTimer())
-		print("it printed")
-		print(player.movementAllowed)
 		if player.movementAllowed then
 			for i=1, #player.pathDisplay do
 				display.remove(player.pathDisplay[i])
