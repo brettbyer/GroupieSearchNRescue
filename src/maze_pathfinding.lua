@@ -93,6 +93,9 @@ return function()
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
 
+			local objectNear, boxX, boxY=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
+			print(objectNear)
+			print(" " .. boxX .. " " .. boxY)
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
@@ -108,7 +111,7 @@ return function()
 		else
 			player.nodeIndex=2
 			player.movementAllowed=true
-			print(player.movementAllowed)
+			--print(player.movementAllowed)
 		end
 	end
 
@@ -135,7 +138,7 @@ return function()
 			distX = math.abs(tileX - tempBox.gridX)
 			distY = math.abs(tileY - tempBox.gridY)
 
-			if ((distX + distY) == 2) then
+			if (math.sqrt(math.pow(distX,2)+math.pow(distY,2)) <= math.sqrt(2)) then
 				return true, tempBox.gridX, tempBox.gridY
 			end
 		end
