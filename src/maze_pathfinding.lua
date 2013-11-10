@@ -56,7 +56,7 @@ return function()
 		print(temperX .. " " .. temperY)
 		tempBox.gridX = math.ceil(temperX/map("tileWidth"))
 		tempBox.gridY = math.ceil(temperY/map("tileWidth"))
-
+		mapGrid[]
 	end
 	print(#map.layer["boxes"].object)
 	print("\nRepresentation of generated pathfinding map: "..str)
