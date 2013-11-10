@@ -56,8 +56,8 @@ return function()
 		print(temperX .. " " .. temperY)
 		tempBox.gridX = math.ceil(temperX/map("tileWidth"))
 		tempBox.gridY = math.ceil(temperY/map("tileWidth"))
-		mapGrid[]
 	end
+
 	print(#map.layer["boxes"].object)
 	print("\nRepresentation of generated pathfinding map: "..str)
 
@@ -122,6 +122,25 @@ return function()
 		y=math.ceil(y/map("tileHeight"))
 		
 		return map.layer["obstacles"].tile(x, y)~=nil, x, y
+	end
+
+	------------------------------------------------------------------------------
+	-- Check 8 adjacent locations for boxes
+	------------------------------------------------------------------------------
+	function isObjectNear(tileX, tileY)
+		local disX, distY, tempBox
+		for index=1, #boxes do
+			tempBox = boxes[index]
+			
+			distX = math.abs(tileX - tempBox.gridX)
+			distY = math.abs(tileY - tempBox.gridY)
+
+			if ((distX + distY) == 2) then
+				return true, tempBox.gridX, tempBox.gridY
+			end
+		end
+
+		return false, -1, -1
 	end
 
 	------------------------------------------------------------------------------
