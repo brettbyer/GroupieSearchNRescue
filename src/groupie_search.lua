@@ -223,16 +223,6 @@ return function()
 		return false, -1, -1, 0
 	end
 
-
-	function removeBox( tileX, tileY )
-		local tempBox
-		for index=1, #boxes do
-			tempBox = boxes[index]
-			if (tileX == tempBox.gridX) and (tileY == tempBox.gridY) then
-				table.remove( boxes, index )
-			end
-		end
-	end
 	------------------------------------------------------------------------------
 	-- Move Player
 	------------------------------------------------------------------------------
