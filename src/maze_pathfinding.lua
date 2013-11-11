@@ -82,6 +82,8 @@ return function()
 	player.pathDisplay={} -- Display objects to mark travelled path
 	player.nodeIndex=2 -- Current node
 
+
+
 	function player.updateGridPos()
 		player.gridX, player.gridY=math.ceil((player.x)/map("tileWidth")), math.ceil((player.y)/map("tileHeight"))
 	end
@@ -89,13 +91,21 @@ return function()
 	------------------------------------------------------------------------------
 	-- Move Player to Next Node
 	------------------------------------------------------------------------------
+	local boxFound = false;
 	function player.toNextNode()
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
 
-			local objectNear, boxX, boxY=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
+			local objectNear, boxX, boxY, objX, objY=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
 			print(objectNear)
 			print(" " .. boxX .. " " .. boxY)
+			if objectNear and not boxFound then
+				boxFound = true;
+				player.nodeIndex=2
+				player.movementAllowed=true
+				local tempEvent = {x = objX, y = objY}
+				player:dispatchEvent(tempEvent)
+			end
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
@@ -111,6 +121,7 @@ return function()
 		else
 			player.nodeIndex=2
 			player.movementAllowed=true
+			boxFound = false
 			--print(player.movementAllowed)
 		end
 	end
@@ -139,7 +150,7 @@ return function()
 			distY = math.abs(tileY - tempBox.gridY)
 
 			if (math.sqrt(math.pow(distX,2)+math.pow(distY,2)) <= math.sqrt(2)) then
-				return true, tempBox.gridX, tempBox.gridY
+				return true, tempBox.gridX, tempBox.gridY, tempBox.x, tempBox.y
 			end
 		end
 
@@ -149,7 +160,7 @@ return function()
 	------------------------------------------------------------------------------
 	-- Move Player
 	------------------------------------------------------------------------------
-	local function movePlayer(event, boxX, boxY )
+	local function movePlayer(event)
 		if "began"==event.phase and player.movementAllowed then
 			for i=1, #player.pathDisplay do
 				display.remove(player.pathDisplay[i])
@@ -158,7 +169,7 @@ return function()
 
 			player.updateGridPos() -- Reset player grid position
 
-			local pointBlocked, tileX, tileY=checkForTile(event.x or boxX, event.y or boxY)
+			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
 
 			if not pointBlocked then
 				local path=pathfinder:getPath(player.gridX, player.gridY, tileX, tileY)
@@ -186,6 +197,44 @@ return function()
 		end
 	end
 	
+	local function movePlayerToBox(event)
+		if player.movementAllowed then
+			for i=1, #player.pathDisplay do
+				display.remove(player.pathDisplay[i])
+				player.pathDisplay[i]=nil
+			end
+
+			player.updateGridPos() -- Reset player grid position
+
+			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
+
+			if not pointBlocked then
+				local path=pathfinder:getPath(player.gridX, player.gridY, tileX, tileY)
+				if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
+					local length=path:getLength()
+					player.path={}
+					for node, count in path:nodes() do
+						table.insert(player.path, {node:getX(), node:getY()})
+
+						local obj=display.newCircle(0, 0, 10)
+						obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
+						table.insert(player.pathDisplay, obj)
+
+						if count==1 then
+							obj:setFillColor(255, 255, 0)
+						else
+							obj:setFillColor(255, 0, 0)
+						end
+					end
+
+					player.movementAllowed=false
+					player.toNextNode() -- Initiate movement
+				end
+			end
+		end
+	end
+
+
 	local function doThis( event )
     	print( "Test 2" )
 	end
@@ -198,6 +247,7 @@ return function()
 	timer.performWithDelay( 1000, doThis, 1 )
 
 	Runtime:addEventListener("touch", movePlayer)
+	Runtime:addEventListener("tempEvent", movePlayer)
 	box1 = map.layer["boxes"].object["box1"]
 	print(box1.weight)
 	print(box1.y)
