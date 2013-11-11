@@ -46,20 +46,20 @@ return function()
 			end
 		end
 	end
-	print(map("mapWidth"))
+	--print(map("mapWidth"))
 	local boxes = map.layer["boxes"].object
 
 	for x=1, #map.layer["boxes"].object do
 		local tempBox = boxes[x]
 		temperX = tempBox.x
 		temperY = tempBox.y
-		print(temperX .. " " .. temperY)
+		--print(temperX .. " " .. temperY)
 		tempBox.gridX = math.ceil(temperX/map("tileWidth"))
 		tempBox.gridY = math.ceil(temperY/map("tileWidth"))
 		tempBox.found = false
 	end
 
-	print(#map.layer["boxes"].object)
+	--print(#map.layer["boxes"].object)
 	print("\nRepresentation of generated pathfinding map: "..str)
 
 	local grid=jumper_grid(mapGrid)
@@ -100,12 +100,14 @@ return function()
 	function player.toNextNode()
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
+			if not goingHome then
+				objectNear, boxX, boxY, index=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
+				print(goingHome)
+			end
+			--print(objectNear)
+			--print(" " .. boxX .. " " .. boxY)
 
-			objectNear, boxX, boxY, index=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
-			print(objectNear)
-			print(" " .. boxX .. " " .. boxY)
-
-			if objectNear and not boxFound then
+			if objectNear and not boxFound and not goingHome then
 				boxFound = true;
 				currX =math.ceil(player.x/map("tileWidth"))
 				currY =math.ceil(player.y/map("tileHeight"))
@@ -180,33 +182,12 @@ return function()
 			end
 			if goingHome then
 				goHome()
-				goingHome = false
+				--goingHome = false
 			end
 			--print(player.movementAllowed)
 		end
 	end
 
-	-- function boxToNextNode(newFoundBox)
-	-- 	if newFoundBox.path[newFoundBox.nodeIndex] then
-	-- 		if newFoundBox.nodeTrans then transition.cancel(newFoundBox.nodeTrans) end
-
-	-- 		newFoundBox.nodeTrans=transition.to(newFoundBox, {
-	-- 			x=(newFoundBox.path[newFoundBox.nodeIndex][1]-0.5)*map("tileWidth"),
-	-- 			y=(newFoundBox.path[newFoundBox.nodeIndex][2]-0.5)*map("tileHeight"),
-	-- 			time=25,
-	-- 			onComplete=function()
-	-- 				transition.to(newFoundBox.pathDisplay[newFoundBox.nodeIndex-1], {xScale=0.5, yScale=0.5, time=100})
-	-- 				newFoundBox.pathDisplay[newFoundBox.nodeIndex-1]:setFillColor(255, 255, 0)
-	-- 				boxToNextNode(newFoundBox)
-	-- 			end
-	-- 		})
-			
-	-- 		newFoundBox.nodeIndex=newFoundBox.nodeIndex+1
-
-	-- 	else
-	-- 		newFoundBox.nodeIndex=2
-	-- 	end
-	-- end
 
 	map.layer["obstacles"]:insert(player)
 
@@ -327,8 +308,8 @@ return function()
 
 	Runtime:addEventListener("touch", movePlayer)
 	Runtime:addEventListener("tempEvent", movePlayer)
-	box1 = map.layer["boxes"].object["box1"]
-	print(box1.weight)
-	print(box1.y)
+	--box1 = map.layer["boxes"].object["box1"]
+	--print(box1.weight)
+	--print(box1.y)
 
 end

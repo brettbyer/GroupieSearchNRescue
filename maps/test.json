@@ -40,7 +40,7 @@
                  "name":"box3",
                  "properties":
                     {
-
+                     "weight":"2"
                     },
                  "type":"",
                  "visible":true,
@@ -54,13 +54,27 @@
                  "name":"box2",
                  "properties":
                     {
-
+                     "weight":"1"
                     },
                  "type":"",
                  "visible":true,
                  "width":0,
                  "x":702,
                  "y":65
+                }, 
+                {
+                 "gid":106,
+                 "height":0,
+                 "name":"box4",
+                 "properties":
+                    {
+                     "weight":"1"
+                    },
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":609,
+                 "y":578
                 }],
          "opacity":1,
          "type":"objectgroup",
