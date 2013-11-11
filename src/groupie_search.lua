@@ -92,12 +92,16 @@ return function()
 	------------------------------------------------------------------------------
 	-- Move Player to Next Node
 	------------------------------------------------------------------------------
-	local boxFound = false;
+	local boxFound = false
+	local objectNear, boxX, boxY, index, newFoundBox
+	local goingHome = false
+
+
 	function player.toNextNode()
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
 
-			local objectNear, boxX, boxY, objX, objY=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
+			objectNear, boxX, boxY, index=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
 			print(objectNear)
 			print(" " .. boxX .. " " .. boxY)
 
@@ -107,11 +111,12 @@ return function()
 				currY =math.ceil(player.y/map("tileHeight"))
 				print( currX .. " " .. currY )
 				player.movementAllowed=true
-
+				goingHome = true
 				for i=1, #player.pathDisplay do
 					display.remove(player.pathDisplay[i])
 					player.pathDisplay[i]=nil
 				end
+
 				local path=pathfinder:getPath(currX, currY, boxX, boxY)
 				if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
 					local length=path:getLength()
@@ -131,11 +136,24 @@ return function()
 					end
 				end
 
-				--player.x = 
 				player.nodeIndex=2 
-				--local tempEvent = {x = (boxX-0.5)*map("tileWidth"), y = (boxY-0.5)*map("tileHeight")}
-				--player:dispatchEvent(tempEvent)
+				newFoundBox = boxes[index]
 			end
+
+			
+			if (newFoundBox ~= nil) and (newFoundBox.found) then
+				newFoundBox.nodeTrans=transition.to(newFoundBox, {
+					x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
+					y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
+					time=25,
+					onComplete=function()
+						transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=100})
+						player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
+						--player.toNextNode()
+					end
+				})	
+			end
+
 			print(player.nodeIndex)
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
@@ -154,9 +172,41 @@ return function()
 			player.nodeIndex=2
 			player.movementAllowed=true
 			boxFound = false
+
+			local home = map.layer["obstacles"].home
+			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
+				goingHome = false
+				newFoundBox = nil
+			end
+			if goingHome then
+				goHome()
+				goingHome = false
+			end
 			--print(player.movementAllowed)
 		end
 	end
+
+	-- function boxToNextNode(newFoundBox)
+	-- 	if newFoundBox.path[newFoundBox.nodeIndex] then
+	-- 		if newFoundBox.nodeTrans then transition.cancel(newFoundBox.nodeTrans) end
+
+	-- 		newFoundBox.nodeTrans=transition.to(newFoundBox, {
+	-- 			x=(newFoundBox.path[newFoundBox.nodeIndex][1]-0.5)*map("tileWidth"),
+	-- 			y=(newFoundBox.path[newFoundBox.nodeIndex][2]-0.5)*map("tileHeight"),
+	-- 			time=25,
+	-- 			onComplete=function()
+	-- 				transition.to(newFoundBox.pathDisplay[newFoundBox.nodeIndex-1], {xScale=0.5, yScale=0.5, time=100})
+	-- 				newFoundBox.pathDisplay[newFoundBox.nodeIndex-1]:setFillColor(255, 255, 0)
+	-- 				boxToNextNode(newFoundBox)
+	-- 			end
+	-- 		})
+			
+	-- 		newFoundBox.nodeIndex=newFoundBox.nodeIndex+1
+
+	-- 	else
+	-- 		newFoundBox.nodeIndex=2
+	-- 	end
+	-- end
 
 	map.layer["obstacles"]:insert(player)
 
@@ -174,7 +224,7 @@ return function()
 	-- Check 8 adjacent locations for boxes
 	------------------------------------------------------------------------------
 	function isObjectNear(tileX, tileY)
-		local disX, distY, tempBox
+		local disX, distY, index
 		for index=1, #boxes do
 			tempBox = boxes[index]
 			
@@ -184,12 +234,12 @@ return function()
 			if (math.sqrt(math.pow(distX,2)+math.pow(distY,2)) <= math.sqrt(2)) then
 				if not tempBox.found then
 					tempBox.found = true;
-					return true, tempBox.gridX, tempBox.gridY, tempBox.x, tempBox.y
+					return true, tempBox.gridX, tempBox.gridY, index
 				end
 			end
 		end
 
-		return false, -1, -1, -1, -1
+		return false, -1, -1, 0
 	end
 
 
@@ -241,8 +291,9 @@ return function()
 			end
 		end
 	end
-	
-	local function movePlayerToBox(boxX, boxY)
+
+
+	function goHome()
 		if player.movementAllowed then
 			for i=1, #player.pathDisplay do
 				display.remove(player.pathDisplay[i])
@@ -250,32 +301,27 @@ return function()
 			end
 
 			player.updateGridPos() -- Reset player grid position
-
-			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
-
-			if not pointBlocked then
-				local path=pathfinder:getPath(player.gridX, player.gridY, boxX, boxY)
-				if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
-					local length=path:getLength()
-					player.path={}
-					for node, count in path:nodes() do
-						table.insert(player.path, {node:getX(), node:getY()})
-
-						local obj=display.newCircle(0, 0, 10)
-						obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
-						table.insert(player.pathDisplay, obj)
-
-						if count==1 then
-							obj:setFillColor(255, 255, 0)
-						else
-							obj:setFillColor(255, 0, 0)
-						end
+			local home = map.layer["obstacles"].home
+			local path=pathfinder:getPath(player.gridX, player.gridY,home[1], home[2])
+			if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
+				local length=path:getLength()
+				player.path={}
+				for node, count in path:nodes() do
+					table.insert(player.path, {node:getX(), node:getY()})
+					local obj=display.newCircle(0, 0, 10)
+					obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
+					table.insert(player.pathDisplay, obj)
+					if count==1 then
+						obj:setFillColor(255, 255, 0)
+					else
+						obj:setFillColor(255, 0, 0)
 					end
-
-					player.movementAllowed=false
-					player.toNextNode() -- Initiate movement
 				end
+				player.movementAllowed=false
+				player.toNextNode()
+
 			end
+			
 		end
 	end
 
