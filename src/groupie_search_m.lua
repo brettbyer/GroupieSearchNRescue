@@ -171,19 +171,7 @@ return function()
 				newFoundBox = boxes[player.index]
 			end
 
-			
-			if (newFoundBox ~= nil) and (newFoundBox.found) and player.goingHome then
-				newFoundBox.nodeTrans=transition.to(newFoundBox, {
-					x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
-					y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
-					time=25,
-					onComplete=function()
-						transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=25})
-						player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
-						--player.toNextNode()
-					end
-				})	
-			end
+
 
 			print(player.goingHome)
 
@@ -205,11 +193,6 @@ return function()
 			player.movementAllowed=true
 			--boxFound = false
 
-			local home = map.layer["obstacles"].home
-			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
-				player.goingHome = false
-				newFoundBox = nil
-			end
 
 			if player.goingHome then
 				print("first index: " .. player.index)
@@ -219,12 +202,16 @@ return function()
 		end
 	end
 
+	------------------------------------------------------------------------------
+	-- Move Player and Optional Box to Home Position
+	------------------------------------------------------------------------------
 	function toHomeNode(player)
 		print("BoxIndex: " .. player.index)
 		local newFoundBox = boxes[player.index]
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
-			--print(newFoundBox.found)
+			
+			-- force box to follow player
 			if (newFoundBox ~= nil) and (newFoundBox.found)  then
 				print("made it here")
 				newFoundBox.nodeTrans=transition.to(newFoundBox, {
@@ -257,13 +244,14 @@ return function()
 		else
 			player.nodeIndex=2
 			player.movementAllowed=true
-			--boxFound = false
+		
 
 			local home = map.layer["obstacles"].home
 			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
 				player.goingHome = false
 				player.searching = true
 				newFoundBox = nil
+				player.index = 0
 			end
 			
 		end
