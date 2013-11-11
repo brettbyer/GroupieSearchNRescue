@@ -91,6 +91,7 @@ return function()
 		player.hasNextLoc = false
 		player.nextLoc = {}
 		player.index = 0
+		player.waiting = false
 
 		map.layer["obstacles"]:insert(player)
 
@@ -145,35 +146,30 @@ return function()
 	------------------------------------------------------------------------------
 	-- Move Player to Next Node
 	------------------------------------------------------------------------------
-	--local objectNear, boxX, boxY, index, newFoundBox
 	
 	function toNextNode(player)
-		local objectNear, boxX, boxY, newFoundBox
+		local objectNear, boxX, boxY
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
 			if not player.goingHome and player.searching then
 				objectNear, boxX, boxY, player.index=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
-				print(player.goingHome)
-				print("this index " .. player.index)
+				--print(player.goingHome)
+				--print("this index " .. player.index)
 			end
-			--print(objectNear)
-			--print(" " .. boxX .. " " .. boxY)
 
+			updateGridPos(player)
 			if objectNear and not player.goingHome then
-				--boxFound = true;
-				--currX =math.ceil(player.x/map("tileWidth"))
-				--currY =math.ceil(player.y/map("tileHeight"))
-				--print( currX .. " " .. currY )
 				player.movementAllowed=true
 				player.goingHome = true
 				player.searching = false
 				setPath(player, boxX, boxY)
-				newFoundBox = boxes[player.index]
+				boxes[player.index].weight = (boxes[player.index].weight - 1)
+				--print(boxes[player.index].weight)
 			end
 
 
 
-			print(player.goingHome)
+			--print(player.goingHome)
 
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
@@ -191,11 +187,19 @@ return function()
 		else
 			player.nodeIndex=2
 			player.movementAllowed=true
-			--boxFound = false
+			updateGridPos(player)
 
 
-			if player.goingHome then
-				print("first index: " .. player.index)
+			local home = map.layer["obstacles"].home
+			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
+				player.goingHome = false
+				player.searching = true
+				newFoundBox = nil
+				player.index = 0
+			end
+			
+			if player.goingHome then 
+				--print("first index: " .. player.index)
 				goHome(player)
 			end
 			
@@ -206,14 +210,14 @@ return function()
 	-- Move Player and Optional Box to Home Position
 	------------------------------------------------------------------------------
 	function toHomeNode(player)
-		print("BoxIndex: " .. player.index)
+		--print("BoxIndex: " .. player.index)
 		local newFoundBox = boxes[player.index]
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
-			
+			updateGridPos(player)
 			-- force box to follow player
 			if (newFoundBox ~= nil) and (newFoundBox.found)  then
-				print("made it here")
+				--print("made it here")
 				newFoundBox.nodeTrans=transition.to(newFoundBox, {
 					x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 					y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
@@ -226,7 +230,7 @@ return function()
 				})	
 			end
 
-			print(player.goingHome)
+			--print(player.goingHome)
 
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
@@ -283,7 +287,7 @@ return function()
 			if (math.sqrt(math.pow(distX,2)+math.pow(distY,2)) <= math.sqrt(2)) then
 				if not tempBox.found then
 					tempBox.found = true
-					print("super first index " .. index)
+					--print("super first index " .. index)
 					return true, tempBox.gridX, tempBox.gridY, index
 				end
 			end
@@ -321,14 +325,80 @@ return function()
 
 
 	function goHome(player)
-		if player.movementAllowed then
+		updateGridPos(player)
+		print(boxes[player.index].weight)
+		if player.movementAllowed and (boxes[player.index].weight == 0) then
+			print("can move")
 
 			updateGridPos(player) -- Reset player grid position
 			local home = map.layer["obstacles"].home
 
 			setPath(player, home[1], home[2])
-			player.movementAllowed=false
+			player.movementAllowed= false
 			toHomeNode(player)
+
+			for i=1,#players do
+				if (players[i].gridX == player.gridX) and (players[i].gridY == player.gridY) then
+					if (players[i].helping) then
+						setPath(players[i], home[1], home[2])
+						players[i].movementAllowed = false
+						toNextNode(players[i])
+						--players[i].searching = true
+					end
+				end
+			end
+
+		elseif (boxes[player.index].weight > 0) and not player.waiting then
+			callHelp(player)
+			player.waiting = true
+			local function doit()
+				goHome(player)
+			end
+			timer.performWithDelay( 1000, doit, 1 )
+			
+
+		elseif player.waiting then
+			print("I'm here")
+			for i=1, #players do
+				if not players[i].waiting and not players[i].helping then
+					print("Player: " .. player.gridX .. " " .. players[i].gridX)
+					if (players[i].gridX == player.gridX) and (players[i].gridY == player.gridY) then
+						boxes[player.index].weight = boxes[player.index].weight - 1
+						print("New weight" .. boxes[player.index].weight)
+						if (boxes[player.index].weight == 0) then
+							players[i].helping = true
+							players[i].rescueing = false
+							player.movementAllowed = true
+							print("Player1: " .. player.gridX .. " " .. players[i].gridX)
+							goHome(player)
+							break
+						end
+					--else
+						--goHome(player)
+					end
+
+				end
+			end
+		end
+
+	end
+
+	function callHelp(player)
+		for i=1, #players do
+			if(players[i].searching == true) then
+				players[i].searching = false
+				players[i].rescueing = true
+				setPath(players[i], player.gridX, player.gridY)
+				toNextNode(players[i])
+				--boxes[player.index].weight = boxes[player.index].weight -1
+				--goHome(player)
+				break
+				-- while not (players[i].gridX == player.gridX) and not (players[i].gridY == player.gridY) do
+				-- 	updateGridPos(players[i])
+				-- end
+				-- 
+				
+			end
 		end
 	end
 
