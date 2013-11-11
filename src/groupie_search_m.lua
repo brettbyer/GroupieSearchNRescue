@@ -90,6 +90,7 @@ return function()
 		player.rescueing = false
 		player.hasNextLoc = false
 		player.nextLoc = {}
+		player.index = 0
 
 		map.layer["obstacles"]:insert(player)
 
@@ -99,6 +100,7 @@ return function()
 	-- add player to player list
 	players[1] = createPlayer()
 	players[2] = createPlayer()
+	players[3] = createPlayer()
 
 
 	------------------------------------------------------------------------------
@@ -143,32 +145,34 @@ return function()
 	------------------------------------------------------------------------------
 	-- Move Player to Next Node
 	------------------------------------------------------------------------------
-	local boxFound = false
-	local objectNear, boxX, boxY, index, newFoundBox
-
+	--local objectNear, boxX, boxY, index, newFoundBox
+	
 	function toNextNode(player)
+		local objectNear, boxX, boxY, newFoundBox
 		if player.path[player.nodeIndex] then
 			if player.nodeTrans then transition.cancel(player.nodeTrans) end
-			if not player.goingHome then
-				objectNear, boxX, boxY, index=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
+			if not player.goingHome and player.searching then
+				objectNear, boxX, boxY, player.index=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
 				print(player.goingHome)
+				print("this index " .. player.index)
 			end
 			--print(objectNear)
 			--print(" " .. boxX .. " " .. boxY)
 
-			if objectNear and not boxFound and not player.goingHome then
-				boxFound = true;
-				currX =math.ceil(player.x/map("tileWidth"))
-				currY =math.ceil(player.y/map("tileHeight"))
-				print( currX .. " " .. currY )
+			if objectNear and not player.goingHome then
+				--boxFound = true;
+				--currX =math.ceil(player.x/map("tileWidth"))
+				--currY =math.ceil(player.y/map("tileHeight"))
+				--print( currX .. " " .. currY )
 				player.movementAllowed=true
 				player.goingHome = true
+				player.searching = false
 				setPath(player, boxX, boxY)
-				newFoundBox = boxes[index]
+				newFoundBox = boxes[player.index]
 			end
 
 			
-			if (newFoundBox ~= nil) and (newFoundBox.found) then
+			if (newFoundBox ~= nil) and (newFoundBox.found) and player.goingHome then
 				newFoundBox.nodeTrans=transition.to(newFoundBox, {
 					x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 					y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
@@ -181,7 +185,8 @@ return function()
 				})	
 			end
 
-			print(player.nodeIndex)
+			print(player.goingHome)
+
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
@@ -198,7 +203,7 @@ return function()
 		else
 			player.nodeIndex=2
 			player.movementAllowed=true
-			boxFound = false
+			--boxFound = false
 
 			local home = map.layer["obstacles"].home
 			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
@@ -207,12 +212,62 @@ return function()
 			end
 
 			if player.goingHome then
+				print("first index: " .. player.index)
 				goHome(player)
 			end
 			
 		end
 	end
 
+	function toHomeNode(player)
+		print("BoxIndex: " .. player.index)
+		local newFoundBox = boxes[player.index]
+		if player.path[player.nodeIndex] then
+			if player.nodeTrans then transition.cancel(player.nodeTrans) end
+			--print(newFoundBox.found)
+			if (newFoundBox ~= nil) and (newFoundBox.found)  then
+				print("made it here")
+				newFoundBox.nodeTrans=transition.to(newFoundBox, {
+					x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
+					y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
+					time=25,
+					onComplete=function()
+						transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=25})
+						player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
+						--player.toNextNode()
+					end
+				})	
+			end
+
+			print(player.goingHome)
+
+			player.nodeTrans=transition.to(player, {
+				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
+				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
+				time=25,
+				onComplete=function()
+					transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=25})
+					player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
+					toHomeNode(player, boxIndex)
+				end
+			})
+			
+			player.nodeIndex=player.nodeIndex+1
+
+		else
+			player.nodeIndex=2
+			player.movementAllowed=true
+			--boxFound = false
+
+			local home = map.layer["obstacles"].home
+			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
+				player.goingHome = false
+				player.searching = true
+				newFoundBox = nil
+			end
+			
+		end
+	end
 
 	
 
@@ -239,7 +294,8 @@ return function()
 
 			if (math.sqrt(math.pow(distX,2)+math.pow(distY,2)) <= math.sqrt(2)) then
 				if not tempBox.found then
-					tempBox.found = true;
+					tempBox.found = true
+					print("super first index " .. index)
 					return true, tempBox.gridX, tempBox.gridY, index
 				end
 			end
@@ -252,22 +308,25 @@ return function()
 	-- Move Player
 	------------------------------------------------------------------------------
 	local function movePlayer(event)
-		player = players[1]
-		if "began"==event.phase and player.movementAllowed then
-			for i=1, #player.pathDisplay do
-				display.remove(player.pathDisplay[i])
-				player.pathDisplay[i]=nil
-			end
-
-			updateGridPos(player) -- Reset player grid position
-
-			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
-
-			if not pointBlocked then
-
-				setPath(player, tileX, tileY)
-				player.movementAllowed=false
-				toNextNode(player) -- Initiate movement
+		
+		for temp=1, #players do
+			player = players[temp]
+			if "began"==event.phase and player.movementAllowed and player.searching then
+				for i=1, #player.pathDisplay do
+					display.remove(player.pathDisplay[i])
+					player.pathDisplay[i]=nil
+				end
+	
+				updateGridPos(player) -- Reset player grid position
+	
+				local pointBlocked, tileX, tileY=checkForTile((math.random(30)-0.5)*map("tileWidth"), (math.random(22)-0.5)*map("tileHeight"))
+	
+				if not pointBlocked then
+	
+					setPath(player, tileX, tileY)
+					player.movementAllowed=false
+					toNextNode(player) -- Initiate movement
+				end
 			end
 		end
 	end
@@ -275,17 +334,13 @@ return function()
 
 	function goHome(player)
 		if player.movementAllowed then
-			for i=1, #player.pathDisplay do
-				display.remove(player.pathDisplay[i])
-				player.pathDisplay[i]=nil
-			end
 
 			updateGridPos(player) -- Reset player grid position
 			local home = map.layer["obstacles"].home
 
 			setPath(player, home[1], home[2])
 			player.movementAllowed=false
-			toNextNode(player)
+			toHomeNode(player)
 		end
 	end
 
