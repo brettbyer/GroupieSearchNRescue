@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="31" height="23" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="opengameart" tilewidth="32" tileheight="32">
+  <image source="../tilesets/opengameart.png" width="320" height="512"/>
+ </tileset>
+ <layer name="obstacles" width="31" height="23">
+  <properties>
+   <property name="home" value="!json! [31, 23]"/>
+   <property name="playerSpawn" value="!json! [31, 2]"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJzVlMEKACAIQ/2d/v8Hu3QKBedmkhB0mL5pkhkf6xw2P1vn1v/CvvWs96i+5w1hVXyp3oTpYZKN+JsIZHbV3Z5gT84cYat2s6L35hrdFWwvN8P2OF1/JMJW7eYrNvJ/oTWVbGVE8+lgs3uRqZfVst5UPVTYv8QGY3ofPA==
+  </data>
+ </layer>
+ <objectgroup name="boxes" width="31" height="23">
+  <object name="box1" gid="106" x="224" y="129">
+   <properties>
+    <property name="weight" value="2"/>
+   </properties>
+  </object>
+  <object name="box3" gid="106" x="928" y="418">
+   <properties>
+    <property name="weight" value="2"/>
+   </properties>
+  </object>
+  <object name="box2" gid="106" x="802" y="32">
+   <properties>
+    <property name="weight" value="1"/>
+   </properties>
+  </object>
+  <object name="box4" gid="106" x="256" y="513">
+   <properties>
+    <property name="weight" value="1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

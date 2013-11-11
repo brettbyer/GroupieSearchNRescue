@@ -79,11 +79,12 @@ return function()
 		player.gridX=math.ceil((player.x)/map("tileWidth")) -- Position in tiles
 		player.gridY=math.ceil((player.y)/map("tileHeight"))
 		
-		player.movementAllowed=true -- Allow touches to trigger movement or not
+		
 		player.path={} -- Path calculated by Jumper
 		player.pathDisplay={} -- Display objects to mark travelled path
 		player.nodeIndex=2 -- Current node
 
+		player.movementAllowed=true -- Allow touches to trigger movement or not
 		player.helping = false
 		player.searching = true
 		player.goingHome = false
@@ -96,6 +97,19 @@ return function()
 		map.layer["obstacles"]:insert(player)
 
 		return player
+	end
+
+	function resetPlayer(player)
+		player.nodeIndex=2 -- Current node
+		player.helping = false
+		player.searching = true
+		player.goingHome = false
+		player.rescueing = false
+		player.hasNextLoc = false
+		player.nextLoc = {}
+		player.index = 0
+		player.waiting = false
+		player.movementAllowed=true -- Allow touches to trigger movement or not
 	end
 
 	-- add player to player list
@@ -192,12 +206,11 @@ return function()
 
 			local home = map.layer["obstacles"].home
 			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
-				player.goingHome = false
-				player.searching = true
+				resetPlayer(player)
 				newFoundBox = nil
 				player.index = 0
 			end
-			
+
 			if player.goingHome then 
 				--print("first index: " .. player.index)
 				goHome(player)
@@ -252,8 +265,7 @@ return function()
 
 			local home = map.layer["obstacles"].home
 			if (math.ceil(player.x/map("tileWidth")) == home[1]) and (math.ceil(player.y/map("tileHeight"))== home[2]) then
-				player.goingHome = false
-				player.searching = true
+				resetPlayer(player)
 				newFoundBox = nil
 				player.index = 0
 			end
@@ -342,6 +354,7 @@ return function()
 					if (players[i].helping) then
 						setPath(players[i], home[1], home[2])
 						players[i].movementAllowed = false
+
 						toNextNode(players[i])
 						--players[i].searching = true
 					end
@@ -354,7 +367,7 @@ return function()
 			local function doit()
 				goHome(player)
 			end
-			timer.performWithDelay( 1000, doit, 1 )
+			timer.performWithDelay( 2000, doit, 1 )
 			
 
 		elseif player.waiting then
