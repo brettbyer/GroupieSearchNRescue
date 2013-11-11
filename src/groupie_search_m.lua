@@ -90,24 +90,27 @@ return function()
 		player.rescueing = false
 		player.hasNextLoc = false
 		player.nextLoc = {}
+
+		map.layer["obstacles"]:insert(player)
+
 		return player
 	end
 
+	-- add player to player list
 	players[1] = createPlayer()
+	players[2] = createPlayer()
 
 
-
-
+	------------------------------------------------------------------------------
+	-- Converts a player's pixel location to tile location on the grid
+	------------------------------------------------------------------------------
 	function updateGridPos(player)
 		player.gridX, player.gridY=math.ceil((player.x)/map("tileWidth")), math.ceil((player.y)/map("tileHeight"))
 	end
 
 	------------------------------------------------------------------------------
-	-- Move Player to Next Node
+	-- Create a new path for specified player
 	------------------------------------------------------------------------------
-	local boxFound = false
-	local objectNear, boxX, boxY, index, newFoundBox
-
 	function setPath( player, x, y )
 		-- convert current pixel position to tile position
 		currX =math.ceil(player.x/map("tileWidth"))
@@ -136,6 +139,12 @@ return function()
 		end
 		player.nodeIndex=2 
 	end
+
+	------------------------------------------------------------------------------
+	-- Move Player to Next Node
+	------------------------------------------------------------------------------
+	local boxFound = false
+	local objectNear, boxX, boxY, index, newFoundBox
 
 	function toNextNode(player)
 		if player.path[player.nodeIndex] then
@@ -205,7 +214,7 @@ return function()
 	end
 
 
-	map.layer["obstacles"]:insert(players[1])
+	
 
 	------------------------------------------------------------------------------
 	-- Check for Existence of Tile at Location
@@ -281,7 +290,7 @@ return function()
 	end
 
 	Runtime:addEventListener("touch", movePlayer)
-	Runtime:addEventListener("tempEvent", movePlayer)
+
 	--box1 = map.layer["boxes"].object["box1"]
 	--print(box1.weight)
 	--print(box1.y)
