@@ -165,7 +165,7 @@ return function()
 					y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
 					time=25,
 					onComplete=function()
-						transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=100})
+						transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=25})
 						player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
 						--player.toNextNode()
 					end
@@ -178,7 +178,7 @@ return function()
 				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
 				time=25,
 				onComplete=function()
-					transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=100})
+					transition.to(player.pathDisplay[player.nodeIndex-1], {xScale=0.5, yScale=0.5, time=25})
 					player.pathDisplay[player.nodeIndex-1]:setFillColor(255, 255, 0)
 					toNextNode(player)
 				end
@@ -196,11 +196,11 @@ return function()
 				player.goingHome = false
 				newFoundBox = nil
 			end
+
 			if player.goingHome then
 				goHome(player)
-				--goingHome = false
 			end
-			--print(player.movementAllowed)
+			
 		end
 	end
 
@@ -255,26 +255,7 @@ return function()
 			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
 
 			if not pointBlocked then
-				-- local path=pathfinder:getPath(player.gridX, player.gridY, tileX, tileY)
-				-- if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
-				-- 	local length=path:getLength()
-				-- 	player.path={}
-				-- 	for node, count in path:nodes() do
-				-- 		table.insert(player.path, {node:getX(), node:getY()})
 
-				-- 		local obj=display.newCircle(0, 0, 10)
-				-- 		obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
-				-- 		table.insert(player.pathDisplay, obj)
-
-				-- 		if count==1 then
-				-- 			obj:setFillColor(255, 255, 0)
-				-- 		else
-				-- 			obj:setFillColor(255, 0, 0)
-				-- 		end
-				-- 	end
-
-					
-				-- end
 				setPath(player, tileX, tileY)
 				player.movementAllowed=false
 				toNextNode(player) -- Initiate movement
@@ -292,24 +273,7 @@ return function()
 
 			updateGridPos(player) -- Reset player grid position
 			local home = map.layer["obstacles"].home
-			--local path=pathfinder:getPath(player.gridX, player.gridY,home[1], home[2])
-			-- if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
-			-- 	local length=path:getLength()
-			-- 	player.path={}
-			-- 	for node, count in path:nodes() do
-			-- 		table.insert(player.path, {node:getX(), node:getY()})
-			-- 		local obj=display.newCircle(0, 0, 10)
-			-- 		obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
-			-- 		table.insert(player.pathDisplay, obj)
-			-- 		if count==1 then
-			-- 			obj:setFillColor(255, 255, 0)
-			-- 		else
-			-- 			obj:setFillColor(255, 0, 0)
-			-- 		end
-			-- 	end
-				
 
-			-- end
 			setPath(player, home[1], home[2])
 			player.movementAllowed=false
 			toNextNode(player)
