@@ -13,6 +13,6 @@ display.setDefault("magTextureFilter", "nearest")
 
 local cleanUp
 local widget=require("widget")
-local pathfinding=require("src.maze_pathfinding")
+local pathfinding=require("src.groupie_search")
 
 pathfinding()

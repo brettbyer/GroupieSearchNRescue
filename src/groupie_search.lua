@@ -56,6 +56,7 @@ return function()
 		print(temperX .. " " .. temperY)
 		tempBox.gridX = math.ceil(temperX/map("tileWidth"))
 		tempBox.gridY = math.ceil(temperY/map("tileWidth"))
+		tempBox.found = false
 	end
 
 	print(#map.layer["boxes"].object)
@@ -99,16 +100,43 @@ return function()
 			local objectNear, boxX, boxY, objX, objY=isObjectNear(player.path[player.nodeIndex][1],player.path[player.nodeIndex][2])
 			print(objectNear)
 			print(" " .. boxX .. " " .. boxY)
+
 			if objectNear and not boxFound then
 				boxFound = true;
-				
+				currX =math.ceil(player.x/map("tileWidth"))
+				currY =math.ceil(player.y/map("tileHeight"))
+				print( currX .. " " .. currY )
 				player.movementAllowed=true
+
+				for i=1, #player.pathDisplay do
+					display.remove(player.pathDisplay[i])
+					player.pathDisplay[i]=nil
+				end
+				local path=pathfinder:getPath(currX, currY, boxX, boxY)
+				if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
+					local length=path:getLength()
+					player.path={}
+					for node, count in path:nodes() do
+						table.insert(player.path, {node:getX(), node:getY()})
+
+						local obj=display.newCircle(0, 0, 10)
+						obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
+						table.insert(player.pathDisplay, obj)
+
+						if count==1 then
+							obj:setFillColor(255, 255, 0)
+						else
+							obj:setFillColor(255, 0, 0)
+						end
+					end
+				end
+
 				--player.x = 
 				player.nodeIndex=2 
-				local tempEvent = {x = (boxX-0.5)*map("tileWidth"), y = (boxY-0.5)*map("tileHeight")}
-				player:dispatchEvent(tempEvent)
+				--local tempEvent = {x = (boxX-0.5)*map("tileWidth"), y = (boxY-0.5)*map("tileHeight")}
+				--player:dispatchEvent(tempEvent)
 			end
-
+			print(player.nodeIndex)
 			player.nodeTrans=transition.to(player, {
 				x=(player.path[player.nodeIndex][1]-0.5)*map("tileWidth"),
 				y=(player.path[player.nodeIndex][2]-0.5)*map("tileHeight"),
@@ -154,13 +182,26 @@ return function()
 			distY = math.abs(tileY - tempBox.gridY)
 
 			if (math.sqrt(math.pow(distX,2)+math.pow(distY,2)) <= math.sqrt(2)) then
-				return true, tempBox.gridX, tempBox.gridY, tempBox.x, tempBox.y
+				if not tempBox.found then
+					tempBox.found = true;
+					return true, tempBox.gridX, tempBox.gridY, tempBox.x, tempBox.y
+				end
 			end
 		end
 
-		return false, -1, -1
+		return false, -1, -1, -1, -1
 	end
 
+
+	function removeBox( tileX, tileY )
+		local tempBox
+		for index=1, #boxes do
+			tempBox = boxes[index]
+			if (tileX == tempBox.gridX) and (tileY == tempBox.gridY) then
+				table.remove( boxes, index )
+			end
+		end
+	end
 	------------------------------------------------------------------------------
 	-- Move Player
 	------------------------------------------------------------------------------
@@ -201,6 +242,42 @@ return function()
 		end
 	end
 	
+	local function movePlayerToBox(boxX, boxY)
+		if player.movementAllowed then
+			for i=1, #player.pathDisplay do
+				display.remove(player.pathDisplay[i])
+				player.pathDisplay[i]=nil
+			end
+
+			player.updateGridPos() -- Reset player grid position
+
+			local pointBlocked, tileX, tileY=checkForTile(event.x, event.y)
+
+			if not pointBlocked then
+				local path=pathfinder:getPath(player.gridX, player.gridY, boxX, boxY)
+				if path then -- With this map, there will always be a path, but I just put this check in for safety with other maps.
+					local length=path:getLength()
+					player.path={}
+					for node, count in path:nodes() do
+						table.insert(player.path, {node:getX(), node:getY()})
+
+						local obj=display.newCircle(0, 0, 10)
+						obj.x, obj.y=(node:getX()-0.5)*map("tileWidth"), (node:getY()-0.5)*map("tileHeight")
+						table.insert(player.pathDisplay, obj)
+
+						if count==1 then
+							obj:setFillColor(255, 255, 0)
+						else
+							obj:setFillColor(255, 0, 0)
+						end
+					end
+
+					player.movementAllowed=false
+					player.toNextNode() -- Initiate movement
+				end
+			end
+		end
+	end
 
 	Runtime:addEventListener("touch", movePlayer)
 	Runtime:addEventListener("tempEvent", movePlayer)
